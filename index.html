@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ALL-IN CORPORATION – Pracovní list</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Urbanist:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05080e; --bg-2:#0a1220; --text:#e9f2ff; --muted:#9fb0c9;
+  --accent:#24a0ff; --card:rgba(10,20,36,.6); --border:#1f2c44;
+  --radius:14px; --ring: #1a90ff33;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:linear-gradient(180deg,var(--bg),var(--bg-2)); color:var(--text);}
+header{position:sticky;top:0;background:linear-gradient(180deg,rgba(8,14,26,.8),rgba(8,14,26,.5));padding:18px 24px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center}
+.logo{width:44px;height:44px;border-radius:10px;background:conic-gradient(from 120deg,#0ef,#24a0ff,#5ef,#24a0ff);box-shadow:0 8px 30px #24a0ff22}
+h1{margin:0;font-size:18px;font-weight:700}
+.note{color:var(--muted);font-size:13px}
+.main{display:grid;grid-template-columns:1fr 420px;gap:20px;padding:22px;max-width:1300px;margin:0 auto}
+@media(max-width:1000px){.main{grid-template-columns:1fr;padding:12px}}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.controls input, .controls select{background:rgba(10,18,30,.6);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px;outline:none}
+.badge{background:linear-gradient(180deg,#081833,#061226);padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-weight:700;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.card{background:linear-gradient(180deg, rgba(6,12,24,.5), rgba(6,12,24,.35));border:1px solid var(--border);padding:14px;border-radius:12px;box-shadow:0 8px 30px rgba(2,10,30,.5)}
+.card h3{margin:0 0 8px;font-size:16px}
+.meta{color:var(--muted);font-size:13px;display:flex;gap:8px;flex-wrap:wrap}
+.pill{background:rgba(10,22,38,.5);padding:6px 8px;border-radius:999px;border:1px solid #24384f;font-size:12px}
+.illegal{background:rgba(255,90,95,.12);border-color:rgba(255,90,95,.35);color:#ffdede}
+.semi{background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.35);color:#fff4d6}
+.price{font-weight:800;margin-top:8px}
+.actions{display:flex;gap:8px;align-items:center;margin-top:10px}
+.qty{width:72px;padding:8px;border-radius:8px;border:1px solid var(--border);background:rgba(8,14,24,.6);color:var(--text)}
+
+.aside{background:linear-gradient(180deg, rgba(8,14,26,.7), rgba(8,14,26,.5));border:1px solid var(--border);padding:16px;border-radius:12px;display:flex;flex-direction:column;gap:10px;height:fit-content}
+.row{display:flex;gap:8px}
+.row input{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:rgba(6,12,24,.6);color:var(--text)}
+.cart-list{max-height:46vh;overflow:auto;padding-top:8px;border-top:1px dashed #20314e;border-bottom:1px dashed #20314e}
+.cart-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 4px;align-items:center}
+.sub{color:var(--muted);font-size:13px}
+.totals{display:grid;grid-template-columns:1fr auto;row-gap:6px;margin-top:6px}
+button{background:linear-gradient(180deg,#2aa8ff,#1984e5);border:none;color:white;padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+button.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+
+.status{min-height:22px}
+
+.small{font-size:13px;color:var(--muted)}
+
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;gap:12px;align-items:center"><div class="logo" aria-hidden="true"></div>
+  <div><h1> ALL-IN CORPORATION – Pracovní list</h1><div class="note">Slouží jako evidence práce mechanika. Do listu se zapisují všechny úpravy, použitý materiál a cena, aby měl zákazník i firma jasný přehled.</div></div></div>
+</header>
+
+<main class="main">
+  <section>
+    <div class="controls">
+      <input id="search" placeholder="Hledat položky…" />
+      <select id="categorySelect"><option value="">Kategorie: vše</option></select>
+      <select id="subCategorySelect"><option value="">Podkategorie: vše</option></select>
+      <div class="badge" id="countBadge">0 položek</div>
+    </div>
+
+    <div class="grid" id="itemsGrid"></div>
+  </section>
+
+  <aside class="aside">
+    <h3>Seznam úprav</h3>
+    <div class="row"><input id="customer" placeholder="Jméno mechanika" /></div>
+    <div class="row"><input id="vehicle" placeholder="Vozidlo (značka / SPZ)" /></div>
+    <div class="row"><input id="discount" type="number" min="0" max="100" value="0" placeholder="Sleva % (volitelné)" /></div>
+    <div class="row"><input id="customLabor" type="number" min="0" step="100" value="0" placeholder="Vlastní práce (volitelné) kč" /></div>
+    <small class="small">Položka <em>Oprava vozidla</em> se účtuje přes „Vlastní práci“.</small>
+
+    <div class="cart-list" id="cartList"></div>
+
+    <div class="totals">
+      <div class="small">Součet položek</div><div id="sumPrice">0 Kč</div>
+      <div class="small">Součet zisku</div><div id="sumProfit">0 Kč</div>
+      <div class="small">Podíl firmě</div><div id="sumFirm">0 Kč</div>
+      <div class="small">Vlastní práce</div><div id="sumLabor">0 Kč</div>
+      <div class="small"><strong>Mezisoučet</strong></div><div id="subTotal"><strong>0 Kč</strong></div>
+      <div class="small">Sleva</div><div id="discountValue">0 Kč</div>
+      <div class="small"><strong>Celkem k úhradě</strong></div><div id="grandTotal"><strong>0 Kč</strong></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+      <button id="sendBtn">Odeslat do Discordu</button>
+      <button class="ghost" id="clearBtn">Vymazat košík</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="small">🟥 Nelegální úprava · 🟧 Částečně nelegální</div>
+  </aside>
+</main>
+
+<script>
+// webhook (vložit svůj url)
+const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1420174017729527848/WN4MkGTDvKSAIGnvJsf1tTfmO2HXKcxsiphHpOHobf7LhnfvB_vI58OFty1ehVAwmtoV";
+
+// utility
+const currency = n => (n===null||n===undefined) ? "—" : n.toLocaleString('cs-CZ') + " Kč";
+const UID = (()=>{let id=0; return ()=>++id;})();
+
+// full ITEMS dataset (from user's list)
+const ITEMS = [
+{ id:UID(), cat:"Základní úpravy", name:"Přebarvení vozidla", price:40000, profit:32000, firm:6400 },
+{ id:UID(), cat:"Základní úpravy", name:"Výměna světel", price:15000, profit:10000, firm:2000, semi:true },
+{ id:UID(), cat:"Základní úpravy", name:"Přídání či odebrání zatmavení oken", price:20000, profit:14500, firm:2900 },
+{ id:UID(), cat:"Základní úpravy", name:"Vystavení protokolu", price:10000, profit:-5000, firm:1000 },
+{ id:UID(), cat:"Základní úpravy", name:"Výměna kola", price:5000, profit:4800, firm:960 },
+{ id:UID(), cat:"Základní úpravy", name:"Oprava vozidla (individuální nacenění)", price:0, profit:0, firm:0, note:"Cenu určí mechanik." },
+{ id:UID(), cat:"Základní úpravy", name:"Protokol", price:10000, profit:5000, firm:1000 },
+
+// Karoserie
+{ id:UID(), cat:"Karoserie", name:"Originální", price:40000, profit:17000, firm:3400 },
+{ id:UID(), cat:"Karoserie", name:"Odlehčení", price:130000, profit:50000, firm:10000 },
+{ id:UID(), cat:"Karoserie", name:"Zpevnění", price:200000, profit:55000, firm:11000 },
+
+// Kola
+{ id:UID(), cat:"Kola", sub:"originální", name:"Originální kola", price:35000, profit:10000, firm:2000 },
+{ id:UID(), cat:"Kola", sub:"offroad", name:"Zenden (offroad)", price:60000, profit:26000, firm:5200 },
+{ id:UID(), cat:"Kola", sub:"shadow", name:"Shadow (shadow)", price:60000, profit:28000, firm:5600 },
+{ id:UID(), cat:"Kola", sub:"mega", name:"Mega (mega)", price:80000, profit:32000, firm:6400 },
+{ id:UID(), cat:"Kola", sub:"rimshine", name:"Ronal Turbo (rimshine)", price:90000, profit:28000, firm:5600 },
+{ id:UID(), cat:"Kola", sub:"wires", name:"Wires (wires)", price:90000, profit:31000, firm:6200 },
+{ id:UID(), cat:"Kola", sub:"classic", name:"Hamann Edition Race (classic)", price:90000, profit:35000, firm:7000 },
+{ id:UID(), cat:"Kola", sub:"twist", name:"Seikel (twist)", price:60000, profit:32000, firm:6400 },
+{ id:UID(), cat:"Kola", sub:"cutter", name:"Cutter (cutter)", price:80000, profit:32500, firm:6500 },
+{ id:UID(), cat:"Kola", sub:"switch", name:"Advan Racing (switch)", price:60000, profit:22000, firm:4400 },
+{ id:UID(), cat:"Kola", sub:"grove", name:"Vette (grove)", price:90000, profit:32000, firm:6400 },
+{ id:UID(), cat:"Kola", sub:"import", name:"Rays Volk Racing (import)", price:80000, profit:29000, firm:5800 },
+{ id:UID(), cat:"Kola", sub:"dollar", name:"DUB Big Chips (dollar)", price:100000, profit:30000, firm:6000 },
+{ id:UID(), cat:"Kola", sub:"trance", name:"Bordet (trance)", price:90000, profit:27300, firm:5460 },
+{ id:UID(), cat:"Kola", sub:"atomic", name:"BBS (atomic)", price:100000, profit:34000, firm:6800 },
+{ id:UID(), cat:"Kola", sub:"ahab", name:"Fifteen52 (ahab)", price:80000, profit:35000, firm:7000 },
+{ id:UID(), cat:"Kola", sub:"virtual", name:"AMG1 (virtual)", price:120000, profit:30000, firm:6000 },
+{ id:UID(), cat:"Kola", sub:"access", name:"BFGoodrich (access)", price:60000, profit:27000, firm:5400 },
+
+// Šířka pneu
+{ id:UID(), cat:"Šířka pneu", name:"Originál", price:30000, profit:18000, firm:3600 },
+{ id:UID(), cat:"Šířka pneu", name:"Velmi úzká", price:30000, profit:18000, firm:3600 },
+{ id:UID(), cat:"Šířka pneu", name:"Úzká", price:40000, profit:26000, firm:5200 },
+{ id:UID(), cat:"Šířka pneu", name:"Běžná", price:45000, profit:27000, firm:5400 },
+{ id:UID(), cat:"Šířka pneu", name:"Široká", price:55000, profit:28000, firm:5600 },
+{ id:UID(), cat:"Šířka pneu", name:"Velmi široká", price:75000, profit:33000, firm:6600 },
+
+// Řídící jednotka
+{ id:UID(), cat:"Řídící jednotka", name:"Tovární nastavení", price:10000, profit:5000, firm:500 },
+{ id:UID(), cat:"Řídící jednotka", name:"Úprava ECU - výkon", price:50000, profit:14000, firm:2800 },
+{ id:UID(), cat:"Řídící jednotka", name:"Úprava ECU - spotřeba", price:30000, profit:15000, firm:3000 },
+
+// Omezovač
+{ id:UID(), cat:"Omezovač", name:"Tovární nastavení", price:10000, profit:5000, firm:1000 },
+{ id:UID(), cat:"Omezovač", name:"Žádný omezovač", price:50000, profit:19000, firm:3800 },
+{ id:UID(), cat:"Omezovač", name:"Omezovač 70km/h", price:30000, profit:16000, firm:3200 },
+{ id:UID(), cat:"Omezovač", name:"Omezovač 90km/h", price:35000, profit:19000, firm:3800 },
+{ id:UID(), cat:"Omezovač", name:"Omezovač 120km/h", price:40000, profit:22000, firm:4400 },
+{ id:UID(), cat:"Omezovač", name:"Omezovač 180km/h", price:45000, profit:25000, firm:5000 },
+{ id:UID(), cat:"Omezovač", name:"Omezovač 250km/h", price:50000, profit:25000, firm:5000 },
+
+// Motor
+{ id:UID(), cat:"Motor", name:"Originální motor", price:50000, profit:22000, firm:2200 },
+{ id:UID(), cat:"Motor", name:"Zlepšený rozvod paliva", price:100000, profit:55000, firm:11000 },
+{ id:UID(), cat:"Motor", name:"Motor s kompresorem", price:170000, profit:55000, firm:11000 },
+{ id:UID(), cat:"Motor", name:"Motor s turbem", price:250000, profit:80000, firm:16000 },
+{ id:UID(), cat:"Motor", name:"Motor s twin-turbem", price:480000, profit:108000, firm:21600, illegal:true },
+
+// Zámek otáčení
+{ id:UID(), cat:"Zámek otáčení", name:"Standardní zámek otáčení", price:30000, profit:12000, firm:2400 },
+{ id:UID(), cat:"Zámek otáčení", name:"Snížený zámek otáčení -4", price:60000, profit:30000, firm:6000 },
+{ id:UID(), cat:"Zámek otáčení", name:"Snížený zámek otáčení -8", price:90000, profit:30000, firm:6000 },
+{ id:UID(), cat:"Zámek otáčení", name:"Zvýšený zámek otáčení +4", price:60000, profit:30000, firm:6000 },
+{ id:UID(), cat:"Zámek otáčení", name:"Zvýšený zámek otáčení +8", price:90000, profit:30000, firm:6000 },
+
+// Spoiler
+{ id:UID(), cat:"Spoiler", name:"Žádný spoiler", price:20000, profit:15000, firm:3000 },
+{ id:UID(), cat:"Spoiler", name:"Spoiler dle vlastního výběru", price:50000, profit:28000, firm:5600 },
+
+// Brzdy
+{ id:UID(), cat:"Brzdy", name:"Originální brzdy", price:40000, profit:30000, firm:6000 },
+{ id:UID(), cat:"Brzdy", name:"Silnější brzdy", price:120000, profit:45000, firm:9000 },
+{ id:UID(), cat:"Brzdy", name:"Seřízení pro drift", price:100000, profit:50000, firm:10000 },
+{ id:UID(), cat:"Brzdy", name:"Zesílení předních brzd T1", price:150000, profit:40000, firm:8000 },
+{ id:UID(), cat:"Brzdy", name:"Zesílení předních brzd T2", price:300000, profit:50000, firm:10000 },
+{ id:UID(), cat:"Brzdy", name:"Zesílení zadních brzd T1", price:150000, profit:40000, firm:8000 },
+{ id:UID(), cat:"Brzdy", name:"Zesílení zadních brzd T2", price:300000, profit:50000, firm:10000 },
+
+// Diferenciál
+{ id:UID(), cat:"Diferenciál", name:"Originální diferenciál", price:40000, profit:16000, firm:3200 },
+{ id:UID(), cat:"Diferenciál", name:"Zavařený diferenciál", price:30000, profit:20000, firm:4000, illegal:true },
+{ id:UID(), cat:"Diferenciál", name:"Samosvorný diferenciál 1-WAY", price:110000, profit:46000, firm:9200 },
+{ id:UID(), cat:"Diferenciál", name:"Samosvorný diferenciál 1.5-WAY", price:110000, profit:46000, firm:9200 },
+{ id:UID(), cat:"Diferenciál", name:"Samosvorný diferenciál 2-WAY", price:110000, profit:46000, firm:9200 },
+
+// Geometrie
+{ id:UID(), cat:"Geometrie", name:"Tovární nastavení", price:10000, profit:9000, firm:1800 },
+{ id:UID(), cat:"Geometrie", name:"Seřízení geometrie T1", price:30000, profit:23000, firm:4600 },
+{ id:UID(), cat:"Geometrie", name:"Seřízení geometrie T2", price:40000, profit:25000, firm:5000 },
+
+// Rozložení hmotnosti
+{ id:UID(), cat:"Rozložení hmotnosti", name:"Originální těžiště", price:40000, profit:20000, firm:4000 },
+{ id:UID(), cat:"Rozložení hmotnosti", name:"Odlehčená přední část", price:50000, profit:25000, firm:5000 },
+{ id:UID(), cat:"Rozložení hmotnosti", name:"Zatížená zadní část", price:45000, profit:25000, firm:5000 },
+{ id:UID(), cat:"Rozložení hmotnosti", name:"Odlehčená zadní část", price:50000, profit:25000, firm:5000 },
+{ id:UID(), cat:"Rozložení hmotnosti", name:"Zatížená přední část", price:45000, profit:25000, firm:5000 },
+
+// Pásy
+{ id:UID(), cat:"Pásy", name:"Běžné tříbodové pásy", price:20000, profit:14000, firm:2800 },
+{ id:UID(), cat:"Pásy", name:"Sportovní čtyřbodové pásy", price:50000, profit:32000, firm:6400 },
+{ id:UID(), cat:"Pásy", name:"Závodní šestibodové pásy", price:70000, profit:38000, firm:7600 },
+
+// Ochranné prvky
+{ id:UID(), cat:"Ochranné prvky", name:"Žádné ochranné prvky", price:30000, profit:15000, firm:3000 },
+{ id:UID(), cat:"Ochranné prvky", name:"Základní bezp. polo-rám (ocel)", price:100000, profit:50000, firm:10000 },
+{ id:UID(), cat:"Ochranné prvky", name:"Základní bezp. rám (ocel)", price:140000, profit:50000, firm:10000, illegal:true },
+{ id:UID(), cat:"Ochranné prvky", name:"Bezp. polo-rám (brom-molybden)", price:220000, profit:70000, firm:14000 },
+{ id:UID(), cat:"Ochranné prvky", name:"Bezp. rám (ocel)", price:270000, profit:70000, firm:14000, illegal:true },
+{ id:UID(), cat:"Ochranné prvky", name:"Bezp. rám (chrom-molybden)", price:500000, profit:100000, firm:20000, illegal:true },
+{ id:UID(), cat:"Ochranné prvky", name:"Závodní bezp. rám (chrom-molybden)", price:1000000, profit:200000, firm:40000, illegal:true },
+
+// Ostatní
+{ id:UID(), cat:"Ostatní", name:"Přidání / odebrání hydrauliky", price:50000, profit:null, firm:null, note:"Hydraulika připraví vozidlo o veškeré off-road vlastnosti – zákazníka informujte." }
+]; // end ITEMS
+
+// build filters
+const grid = document.getElementById('itemsGrid');
+const categorySelect = document.getElementById('categorySelect');
+const subCategorySelect = document.getElementById('subCategorySelect');
+const searchInput = document.getElementById('search');
+const countBadge = document.getElementById('countBadge');
+const cart = new Map();
+
+function unique(arr){ return [...new Set(arr)].filter(Boolean).sort(); }
+function buildFilters(){
+  const cats = unique(ITEMS.map(i=>i.cat));
+  categorySelect.innerHTML = '<option value="">Kategorie: vše</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  buildSubcats();
+}
+function buildSubcats(){
+  const cat = categorySelect.value;
+  const subs = unique(ITEMS.filter(i=>!cat||i.cat===cat).map(i=>i.sub||""));
+  subCategorySelect.innerHTML = '<option value="">Podkategorie: vše</option>' + subs.filter(Boolean).map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+
+function filteredItems(){
+  const q = (searchInput.value||"").toLowerCase();
+  const cat = categorySelect.value;
+  const sub = subCategorySelect.value;
+  return ITEMS.filter(i=> (!cat||i.cat===cat) && (!sub|| (i.sub||"")===sub) && (i.name.toLowerCase().includes(q) || i.cat.toLowerCase().includes(q) || (i.sub||"").toLowerCase().includes(q)) );
+}
+
+function render(){
+  const items = filteredItems();
+  countBadge.textContent = items.length + " položek";
+  grid.innerHTML = items.map(i=>{
+    const flags = `${i.illegal?'<span class="pill illegal">🟥 Ilegální</span>':''}${i.semi?'<span class="pill semi">🟧 Částečně nelegální</span>':''}`;
+    const sub = i.sub?`<span class="pill">${i.sub}</span>`:'';
+    const note = i.note?`<div class="small">${i.note}</div>`:'';
+    return `<div class="card">
+      <h3>${i.name}</h3>
+      <div class="meta"><span class="pill">${i.cat}</span>${sub}${flags}</div>
+      <div class="price">Cena: ${currency(i.price)}</div>
+      <div class="meta"><span class="pill">Zisk: ${currency(i.profit)}</span><span class="pill">Firma: ${currency(i.firm)}</span></div>
+      ${note}
+      <div class="actions">
+        <input class="qty" id="qty_${i.id}" type="number" min="1" value="1">
+        <button onclick="addToCart(${i.id})">Přidat</button>
+      </div>
+    </div>`;
+  }).join('');
+  renderCart();
+}
+
+function addToCart(id){
+  const item = ITEMS.find(x=>x.id===id);
+  if(!item) return;
+  const qtyInput = document.getElementById('qty_'+id);
+  const qty = parseInt(qtyInput?.value||"1");
+  const key = String(id);
+  if(cart.has(key)){
+    const entry = cart.get(key);
+    entry.qty += qty;
+  } else {
+    cart.set(key, { item, qty });
+  }
+  renderCart();
+}
+
+function removeFromCart(key){
+  cart.delete(key);
+  renderCart();
+}
+
+function renderCart(){
+  const list = document.getElementById('cartList');
+  const arr = [...cart.entries()];
+  if(arr.length===0){
+    list.innerHTML = '<div class="small">Zoznam je prázdný.</div>';
+  } else {
+    list.innerHTML = arr.map(([key,{item,qty}])=>`
+      <div class="cart-item">
+        <div>
+          <div><strong>${item.name}</strong> × ${qty}</div>
+          <div class="sub">${item.cat}${item.sub? ' • '+item.sub:''}${item.illegal? ' • 🟥':''}${item.semi? ' • 🟧':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="sub">${currency((item.price||0)*qty)}</div>
+          <div style="margin-top:6px"><button class="ghost" onclick="removeFromCart('${key}')">Smazat</button></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const customLabor = parseInt(document.getElementById('customLabor').value||"0");
+  const discountPct = parseFloat(document.getElementById('discount').value||"0");
+
+  let sumPrice=0,sumProfit=0,sumFirm=0;
+  arr.forEach(([_,{item,qty}])=>{
+    sumPrice += (item.price||0) * qty;
+    sumProfit += (item.profit||0) * qty;
+    sumFirm += (item.firm||0) * qty;
+  });
+  const subtotal = sumPrice + customLabor;
+  const discount = Math.round(subtotal * (discountPct/100));
+  const grand = subtotal - discount;
+
+  document.getElementById('sumPrice').textContent = currency(sumPrice);
+  document.getElementById('sumProfit').textContent = currency(sumProfit);
+  document.getElementById('sumFirm').textContent = currency(sumFirm);
+  document.getElementById('sumLabor').textContent = currency(customLabor);
+  document.getElementById('subTotal').innerHTML = '<strong>'+currency(subtotal)+'</strong>';
+  document.getElementById('discountValue').textContent = '- ' + currency(discount);
+  document.getElementById('grandTotal').innerHTML = '<strong>'+currency(grand)+'</strong>';
+}
+
+// events
+document.getElementById('search').addEventListener('input', render);
+categorySelect.addEventListener('change', ()=>{ buildSubcats(); render(); });
+subCategorySelect.addEventListener('change', render);
+document.getElementById('discount').addEventListener('input', renderCart);
+document.getElementById('customLabor').addEventListener('input', renderCart);
+document.getElementById('clearBtn').addEventListener('click', ()=>{ cart.clear(); renderCart(); });
+
+// send to discord
+async function sendToDiscord(){
+  const status = document.getElementById('status');
+  if(!DISCORD_WEBHOOK && !DISCORD_WEBHOOK.length){ status.innerHTML = '<span style="color:#ffcccb">Vlož WEBHOOK URL do kódu.</span>'; return; }
+  const customer = document.getElementById('customer').value || 'Nezadáno';
+  const vehicle = document.getElementById('vehicle').value || 'Nezadáno';
+  const labor = parseInt(document.getElementById('customLabor').value||"0");
+  const discountPct = parseFloat(document.getElementById('discount').value||"0");
+
+  const items = [...cart.values()].map(({item,qty})=>({ name:item.name, cat:item.cat, sub:item.sub||'', qty, price:(item.price||0)*qty, flags: item.illegal? '🟥':'' }));
+  let sumPrice=0,sumProfit=0,sumFirm=0;
+  items.forEach(i=>{ sumPrice+=i.price; });
+  const subtotal = sumPrice + labor;
+  const discount = Math.round(subtotal * (discountPct/100));
+  const total = subtotal - discount;
+
+  const lines = items.map(i=>`• ${i.name} × ${i.qty} (${i.cat}${i.sub? ' • '+i.sub:''}) ${i.flags} – ${i.price.toLocaleString('cs-CZ')} Kč`).join("\n") || '—';
+
+  const embed = {
+    title: "Záznam úprav – AIC",
+    color: 0x24a0ff,
+    fields: [
+      {name:"Mechanik", value:customer, inline:true},
+      {name:"Vozidlo", value:vehicle, inline:true},
+      {name:"Položky", value:lines, inline:false},
+      {name:"Součet položek", value: sumPrice.toLocaleString('cs-CZ')+" Kč", inline:true},
+      {name:"Vlastní práce", value: labor.toLocaleString('cs-CZ')+" Kč", inline:true},
+      {name:"Sleva", value: "-"+discount.toLocaleString('cs-CZ')+" Kč", inline:true},
+      {name:"Celkem k úhradě", value: total.toLocaleString('cs-CZ')+" Kč", inline:false},
+    ],
+  };
+
+  try{
+    const res = await fetch(DISCORD_WEBHOOK, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({embeds:[embed]})});
+    if(res.ok){ status.innerHTML = '<span style="color:#b6f5d0">✅ Odesláno</span>'; cart.clear(); renderCart(); }
+    else { const txt = await res.text(); status.innerHTML = '<span style="color:#ffcccb">Chyba webhooku: '+res.status+'</span>'; }
+  }catch(e){ status.innerHTML = '<span style="color:#ffcccb">Chyba: '+e.message+'</span>'; }
+}
+
+document.getElementById('sendBtn').addEventListener('click', sendToDiscord);
+
+// init
+buildFilters();
+render();
+
+</script>
+</body>
+</html>
