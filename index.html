@@ -349,21 +349,21 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{ cart.clear()
 // send to discord
 async function sendToDiscord(){
   const status = document.getElementById('status');
-  if(!DISCORD_WEBHOOK && !DISCORD_WEBHOOK.length){ status.innerHTML = '<span style="color:#ffcccb">Vlož WEBHOOK URL do kódu.</span>'; return; }
+  if(!DISCORD_WEBHOOK){ status.innerHTML = '<span style="color:#ffcccb">Vlož WEBHOOK URL do kódu.</span>'; return; }
   const customer = document.getElementById('customer').value || 'Nezadáno';
   const vehicle = document.getElementById('vehicle').value || 'Nezadáno';
   const labor = parseInt(document.getElementById('customLabor').value||"0");
   const discountPct = parseFloat(document.getElementById('discount').value||"0");
-
-  const items = [...cart.values()].map(({item,qty})=>({ name:item.name, cat:item.cat, sub:item.sub||'', qty, price:(item.price||0)*qty, flags: item.illegal? '🟥':'' }));
+  const items = [...cart.values()].map(({item,qty})=>({
+    name:item.name, cat:item.cat, sub:item.sub||'', qty,
+    price:(item.price||0)*qty, profit:(item.profit||0)*qty, firm:(item.firm||0)*qty, flags:item.illegal?'🟥':''
+  }));
   let sumPrice=0,sumProfit=0,sumFirm=0;
-  items.forEach(i=>{ sumPrice+=i.price; });
+  items.forEach(i=>{ sumPrice+=i.price; sumProfit+=i.profit; sumFirm+=i.firm; });
   const subtotal = sumPrice + labor;
   const discount = Math.round(subtotal * (discountPct/100));
   const total = subtotal - discount;
-
   const lines = items.map(i=>`• ${i.name} × ${i.qty} (${i.cat}${i.sub? ' • '+i.sub:''}) ${i.flags} – ${i.price.toLocaleString('cs-CZ')} Kč`).join("\n") || '—';
-
   const embed = {
     title: "Záznam úprav – AIC",
     color: 0x24a0ff,
@@ -372,25 +372,20 @@ async function sendToDiscord(){
       {name:"Vozidlo", value:vehicle, inline:true},
       {name:"Položky", value:lines, inline:false},
       {name:"Součet položek", value: sumPrice.toLocaleString('cs-CZ')+" Kč", inline:true},
+      {name:"Firemní zisk", value: sumFirm.toLocaleString('cs-CZ')+" Kč", inline:true},
       {name:"Vlastní práce", value: labor.toLocaleString('cs-CZ')+" Kč", inline:true},
       {name:"Sleva", value: "-"+discount.toLocaleString('cs-CZ')+" Kč", inline:true},
       {name:"Celkem k úhradě", value: total.toLocaleString('cs-CZ')+" Kč", inline:false},
     ],
   };
-
   try{
-    const res = await fetch(DISCORD_WEBHOOK, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({embeds:[embed]})});
-    if(res.ok){ status.innerHTML = '<span style="color:#b6f5d0">✅ Odesláno</span>'; cart.clear(); renderCart(); }
-    else { const txt = await res.text(); status.innerHTML = '<span style="color:#ffcccb">Chyba webhooku: '+res.status+'</span>'; }
-  }catch(e){ status.innerHTML = '<span style="color:#ffcccb">Chyba: '+e.message+'</span>'; }
+    const res = await fetch(DISCORD_WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({embeds:[embed]})});
+    if(res.ok){ status.innerHTML='<span style="color:#b6f5d0">✅ Odesláno</span>'; cart.clear(); renderCart(); }
+    else { status.innerHTML='<span style="color:#ffcccb">Chyba webhooku: '+res.status+'</span>'; }
+  }catch(e){ status.innerHTML='<span style="color:#ffcccb">Chyba: '+e.message+'</span>'; }
 }
-
 document.getElementById('sendBtn').addEventListener('click', sendToDiscord);
-
-// init
-buildFilters();
-render();
-
+buildFilters(); render();
 </script>
 </body>
 </html>
